@@ -3,28 +3,31 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using StockManagementAPI.Data;
 using StockManagementAPI.Models;
 using StockManagementAPI.Repositories;
 
 namespace StockManagementAPI.Controllers
 {
-    public class UsersController : Controller
+    [ApiController]
+    [Route("api/[controller]")]
+    public class UsersController : ControllerBase
     {
         private readonly IUserRepository _userRepository;
+
         public UsersController(IUserRepository userRepository)
         {
             _userRepository = userRepository;
         }
 
-        // GET: Users
-        public async Task<IActionResult> Index()
+        // GET: api/Users
+        [HttpGet]
+        public async Task<IActionResult> GetUsers()
         {
             try
             {
-                return View(await _userRepository.GetAllAsync());
+                var users = await _userRepository.GetAllAsync();
+                return Ok(users);
             }
             catch (Exception ex)
             {
@@ -33,160 +36,18 @@ namespace StockManagementAPI.Controllers
             }
         }
 
-        // GET: Users/Details/5
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            try
-            {
-                var user = await _userRepository.GetByIdAsync(id.Value);
-                if (user == null)
-                {
-                    return NotFound();
-                }
-
-                return View(user);
-            }
-            catch (Exception ex)
-            {
-                // Log exception
-                return StatusCode(500, "Internal server error");
-            }
-        }
-
-        // GET: Users/Create
-        public IActionResult Create()
-        {
-            return View();
-        }
-
-        // POST: Users/Create
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Username,Email,CreatedDate")] User user)
-        {
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    await _userRepository.InsertAsync(user);
-                    await _userRepository.SaveAsync();
-                    return RedirectToAction(nameof(Index));
-                }
-                catch (Exception ex)
-                {
-                    // Log exception
-                    return StatusCode(500, "Internal server error");
-                }
-            }
-            return View(user);
-        }
-
-        // GET: Users/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            try
-            {
-                var user = await _userRepository.GetByIdAsync(id.Value);
-                if (user == null)
-                {
-                    return NotFound();
-                }
-                return View(user);
-            }
-            catch (Exception ex)
-            {
-                // Log exception
-                return StatusCode(500, "Internal server error");
-            }
-        }
-
-        // POST: Users/Edit/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Username,Email,CreatedDate")] User user)
-        {
-            if (id != user.Id)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    await _userRepository.UpdateAsync(id, user);
-                    await _userRepository.SaveAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!await UserExists(user.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    // Log exception
-                    return StatusCode(500, "Internal server error");
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            return View(user);
-        }
-
-        // GET: Users/Delete/5
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            try
-            {
-                var user = await _userRepository.GetByIdAsync(id.Value);
-                if (user == null)
-                {
-                    return NotFound();
-                }
-
-                return View(user);
-            }
-            catch (Exception ex)
-            {
-                // Log exception
-                return StatusCode(500, "Internal server error");
-            }
-        }
-
-        // POST: Users/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        // GET: api/Users/5
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetUser(int id)
         {
             try
             {
                 var user = await _userRepository.GetByIdAsync(id);
-                if (user != null)
+                if (user == null)
                 {
-                    await _userRepository.DeleteAsync(id);
-                    await _userRepository.SaveAsync();
+                    return NotFound();
                 }
-                return RedirectToAction(nameof(Index));
+                return Ok(user);
             }
             catch (Exception ex)
             {
@@ -195,6 +56,94 @@ namespace StockManagementAPI.Controllers
             }
         }
 
+        // POST: api/Users
+        [HttpPost]
+        public async Task<IActionResult> CreateUser([FromBody] User user)
+        {
+            if (user == null)
+            {
+                return BadRequest("User is null.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                await _userRepository.InsertAsync(user);
+                await _userRepository.SaveAsync();
+                return CreatedAtAction(nameof(GetUser), new { id = user.Id }, user);
+            }
+            catch (Exception ex)
+            {
+                // Log exception
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        // PUT: api/Users/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateUser(int id, [FromBody] User user)
+        {
+            if (user == null || id != user.Id)
+            {
+                return BadRequest("User is null or ID mismatch.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                await _userRepository.UpdateAsync(id, user);
+                await _userRepository.SaveAsync();
+                return NoContent();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!await UserExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log exception
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        // DELETE: api/Users/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteUser(int id)
+        {
+            try
+            {
+                var user = await _userRepository.GetByIdAsync(id);
+                if (user == null)
+                {
+                    return NotFound();
+                }
+
+                await _userRepository.DeleteAsync(id);
+                await _userRepository.SaveAsync();
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                // Log exception
+                return StatusCode(500, "Internal server error");
+            }
+        }
+        [HttpGet("Id/{id}")]
         private async Task<bool> UserExists(int id)
         {
             try

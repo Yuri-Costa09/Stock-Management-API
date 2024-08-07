@@ -25,80 +25,32 @@ namespace StockManagementAPI.Repositories
 
         public async Task<IEnumerable<User>> GetAllAsync()
         {
-            try
-            {
-                return await _context.User.ToListAsync();
-            }
-            catch (Exception ex)
-            {
-                // Log exception
-                throw new Exception("An error occurred while retrieving users.", ex);
-            }
+            return await _context.User.ToListAsync();
         }
 
         public async Task<User> GetByIdAsync(int id)
         {
-            try
-            {
-                return await _context.User.FirstOrDefaultAsync(u => u.Id == id);
-            }
-            catch (Exception ex)
-            {
-                // Log exception
-                throw new Exception($"An error occurred while retrieving the user with ID {id}.", ex);
-            }
+            return await _context.User.FirstOrDefaultAsync(u => u.Id == id);
         }
 
         public async Task<User> GetByUserNameAsync(string userName)
         {
-            try
-            {
-                return await _context.User.FirstOrDefaultAsync(u => u.Username == userName);
-            }
-            catch (Exception ex)
-            {
-                // Log exception
-                throw new Exception($"An error occurred while retrieving the user with username {userName}.", ex);
-            }
+            return await _context.User.FirstOrDefaultAsync(u => u.Username == userName);
         }
 
         public async Task InsertAsync(User user)
         {
-            try
-            {
-                await _context.User.AddAsync(user);
-            }
-            catch (Exception ex)
-            {
-                // Log exception
-                throw new Exception("An error occurred while inserting the user.", ex);
-            }
+            await _context.User.AddAsync(user);
         }
 
         public async Task SaveAsync()
         {
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-                // Log exception
-                throw new Exception("An error occurred while saving changes.", ex);
-            }
+            await _context.SaveChangesAsync();
         }
 
         public async Task UpdateAsync(int Id, User user)
         {
-            try
-            {
-                _context.User.Update(user);
-            }
-            catch (Exception ex)
-            {
-                // Log exception
-                throw new Exception($"An error occurred while updating the user with ID {Id}.", ex);
-            }
+            _context.User.Update(user);
         }
     }
 }
